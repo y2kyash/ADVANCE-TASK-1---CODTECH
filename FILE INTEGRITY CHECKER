@@ -1,0 +1,62 @@
+#PROJECT NAME : FILE INTEGRITY CHECKER
+
+
+import os
+import hashlib
+import tkinter as tk
+from tkinter import filedialog, messagebox, scrolledtext
+
+def calculate_sha256(file_path):
+    #Calculate SHA-256 hash of a file.
+    sha256_hash = hashlib.sha256()
+    try:
+        with open(file_path, "rb") as f:
+            while True:
+                data = f.read(65536)  # Read in chunks of 64KB
+                if not data:
+                    break
+                sha256_hash.update(data)
+    except Exception as e:
+        return f"Error: {e}"
+    return sha256_hash.hexdigest()
+
+def check_integrity():
+    #Check integrity of files in a selected directory.
+    directory_path = filedialog.askdirectory(title="Select Directory")
+    if not directory_path:
+        return
+
+    if not os.path.exists(directory_path) or not os.path.isdir(directory_path):
+        messagebox.showerror("Error", f"Directory '{directory_path}' does not exist.")
+        return
+
+    results_text.delete(1.0, tk.END)  # Clear previous results
+    results_text.insert(tk.END, f"Checking files in: {directory_path}\n\n")
+
+    for root, dirs, files in os.walk(directory_path):
+        for file_name in files:
+            file_path = os.path.join(root, file_name)
+            calculated_hash = calculate_sha256(file_path)
+            results_text.insert(tk.END, f"File: {file_path}\nSHA-256 Hash: {calculated_hash}\n\n")
+
+    messagebox.showinfo("Done", "File integrity check completed!")
+
+# Create the main GUI window
+root = tk.Tk()
+root.title("File Integrity Checker")
+root.geometry("600x500")
+
+# Instructions Label
+instructions_label = tk.Label(root, text="Select a directory to check the SHA-256 hash of its files:", font=("Arial", 12))
+instructions_label.pack(pady=10)
+
+# Check Integrity Button
+check_button = tk.Button(root, text="Check Integrity", command=check_integrity, font=("Arial", 12), bg="lightblue")
+check_button.pack(pady=10)
+
+# Scrolled Text Widget for Displaying Results
+results_text = scrolledtext.ScrolledText(root, wrap=tk.WORD, font=("Courier", 10), width=80, height=20)
+results_text.pack(pady=10)
+
+# Run the main loop
+root.mainloop()
